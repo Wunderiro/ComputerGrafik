@@ -55,6 +55,7 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
 
 		glUseProgram(shaderProgram.getId());
 		int locat = glGetUniformLocation(shaderProgram.getId(), "myProjectMat");
+
 		glUniformMatrix4fv(locat, false, nearFar);
 
 	}
@@ -223,11 +224,12 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
         		pyr[i+2] = startVertZ;
         	}
         	if(i==3 || i==12 || i== 21||i==30) { //vertex links für jedes Dreieck
+        		if(i<13) pyr[i+2]=startVertZ/2;
+        		else pyr[i+2]=startVertZ*1.5f;
         		if(i==3 || i== 30) pyr[i] = pyr[i-2]/2;
         		else pyr[i] = pyr[i-1]/2;
         		pyr[i+1] = startVertY-startVertY;
-        		if(i<13) pyr[i+2]=startVertZ/2;
-        		else pyr[i+2]=startVertZ*1.5f;}
+}
         		
             	if(i==6 || i==15 || i== 24||i==33) { //vertex rechts für jedes Dreieck
             		if(i<16) pyr[i] = pyr[3]*-1;
