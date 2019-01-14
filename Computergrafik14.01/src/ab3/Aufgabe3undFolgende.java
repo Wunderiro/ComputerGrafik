@@ -30,6 +30,10 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
 	private int vboId;
 	private int texOktaId;
 	private int texId;
+	float[] uvKoords = {0,0,  1,0,  0,1,
+						0,0,  1,0,  0,1,  
+						0,0,  1,0,  0,1,
+						0,0,  1,0,  0,1,};
 
 	public static void main(String[] args) {
 		new Aufgabe3undFolgende().start("CG Aufgabe 3", 700, 700);
@@ -39,91 +43,10 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
 	protected void init() {
 		shaderProgram = new ShaderProgram("aufgabe3");
 		shaderProgramOkta = new ShaderProgram("secObj");
-
-		// Koordinaten, VAO, VBO, ... hier anlegen und im Grafikspeicher ablegen
-		float[] dreieck = new float[] { 0.25f, 0, 0.5f, 0, 0.5f, 0.5f, -0.25f, 0, 0.5f, // vorn
-										0.25f, 0, 0.5f, 0, 0, 1, 0, 0.5f, 0.5f, // rechts
-										0, 0.5f, 0.5f, 0, 0, 1, -0.25f, 0, 0.5f, // links
-										-0.25f, 0, 0.5f, 0, 0, 1, 0.25f, 0, 0.5f, }; // unten
-
-		float[] firstPyr = pyramid(); //eine Pyramide ohne Boden
-		float[] secondPyr = flipPyr(pyramid());// naechste Pyramide, auf den kopf stellen und mergen
-		float[] oktahedron = mergeArrays(firstPyr, secondPyr);
-
-		for(int i=0;i<oktahedron.length;i++)	// positionsArray ausdrucken
-		System.out.println(oktahedron[i]+" pos-> "+i);
-				
-		float[] normalen = calculateNormals(dreieck);
-
-		float[] normalenOkta = calculateNormals(oktahedron);
 		
-		glUseProgram(shaderProgram.getId());
-		vaoId = glGenVertexArrays();
-		glBindVertexArray(vaoId); //1. vao binden und vbos definieren
-		vboId = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vboId);
-		glBufferData(GL_ARRAY_BUFFER, dreieck, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-		glEnableVertexAttribArray(0);
-
-		float[] uvKoords = new float[] { 	0,0,  1,0,  0,1,
-											0,0,  1,0,  0,1,  
-											0,0,  1,0,  0,1,
-											0,0,  1,0,  0,1,};
+		defineTetraeder(); //objekte anlegen und im speicher ablegen
+		defineOktaeder();
 		
-		float[] uvKoordsOkta = mergeArrays(uvKoords,uvKoords);
-		
-		float[] dreieckColor = new float[] { 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,
-				0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0 };
-
-		int vboColors = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vboColors);
-		glBufferData(GL_ARRAY_BUFFER, dreieckColor, GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-		glEnableVertexAttribArray(1);
-
-		int vbNormals = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vbNormals);
-		glBufferData(GL_ARRAY_BUFFER, normalen, GL_STATIC_DRAW);
-		glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
-		glEnableVertexAttribArray(2);
-
-		Texture myTex = new Texture("bild.jpg", 8);
-		texId = myTex.getId();
-		glBindTexture(GL_TEXTURE_2D, texId);
-
-		int vboUV = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vboUV);
-		glBufferData(GL_ARRAY_BUFFER, uvKoords, GL_STATIC_DRAW);
-		glVertexAttribPointer(3, 2, GL_FLOAT, false, 0, 0);
-		glEnableVertexAttribArray(3);
-
-		// Zweites Vao binden und dann vbos definieren
-
-		vaOktaId = glGenVertexArrays();
-		glBindVertexArray(vaOktaId);
-		int vboZweiId = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vboZweiId);
-		glBufferData(GL_ARRAY_BUFFER, oktahedron, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-		glEnableVertexAttribArray(0);
-
-		int vbNormalsOkta = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vbNormalsOkta);
-		glBufferData(GL_ARRAY_BUFFER, normalenOkta, GL_STATIC_DRAW);
-		glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
-		glEnableVertexAttribArray(2);
-
-		Texture myTexOkta = new Texture("bild4.jpg", 8);
-		texOktaId = myTexOkta.getId();
-		glBindTexture(GL_TEXTURE_2D, texOktaId);
-
-		int vboUVOkta = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vboUVOkta);
-		glBufferData(GL_ARRAY_BUFFER, uvKoordsOkta, GL_STATIC_DRAW);
-		glVertexAttribPointer(3, 2, GL_FLOAT, false, 0, 0);
-		glEnableVertexAttribArray(3);
-
 		glEnable(GL_DEPTH_TEST); // z-Buffer aktivieren
 //		glEnable(GL_CULL_FACE); // backface culling aktivieren //punkte anders rum zeichnen, damit an bleiben
 								// kann
@@ -186,6 +109,89 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
 
 	// }
 
+	public void defineTetraeder() {
+	// Koordinaten, VAO, VBO, ... hier anlegen und im Grafikspeicher ablegen
+		float[] dreieck = new float[] { 0.25f, 0, 0.5f, 0, 0.5f, 0.5f, -0.25f, 0, 0.5f, // vorn
+										0.25f, 0, 0.5f, 0, 0, 1, 0, 0.5f, 0.5f, // rechts
+										0, 0.5f, 0.5f, 0, 0, 1, -0.25f, 0, 0.5f, // links
+										-0.25f, 0, 0.5f, 0, 0, 1, 0.25f, 0, 0.5f, }; // unten
+		
+		float[] normalen = calculateNormals(dreieck);
+
+		float[] dreieckColor = new float[] { 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,
+				0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0 };
+
+		glUseProgram(shaderProgram.getId());
+		vaoId = glGenVertexArrays();
+		glBindVertexArray(vaoId); //1. vao binden und vbos definieren
+		vboId = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, vboId);
+		glBufferData(GL_ARRAY_BUFFER, dreieck, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		int vboColors = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, vboColors);
+		glBufferData(GL_ARRAY_BUFFER, dreieckColor, GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		int vbNormals = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, vbNormals);
+		glBufferData(GL_ARRAY_BUFFER, normalen, GL_STATIC_DRAW);
+		glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(2);
+
+		Texture myTex = new Texture("bild.jpg", 8);
+		texId = myTex.getId();
+		glBindTexture(GL_TEXTURE_2D, texId);
+
+		int vboUV = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, vboUV);
+		glBufferData(GL_ARRAY_BUFFER, uvKoords, GL_STATIC_DRAW);
+		glVertexAttribPointer(3, 2, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(3);
+
+	}
+	
+	public void defineOktaeder() {
+		float[] firstPyr = pyramid(); //eine Pyramide ohne Boden
+		float[] secondPyr = flipPyr(pyramid());// naechste Pyramide, auf den kopf stellen und mergen
+		float[] oktaeder = mergeArrays(firstPyr, secondPyr);
+
+		for(int i=0;i<oktaeder.length;i++)	// positionsArray ausdrucken
+		System.out.println(oktaeder[i]+" pos-> "+i);
+				
+		float[] normalenOkta = calculateNormals(oktaeder);
+		
+		float[] uvKoordsOkta = mergeArrays(uvKoords,uvKoords);
+		
+		// Zweites Vao binden und dann vbos definieren
+
+		vaOktaId = glGenVertexArrays();
+		glBindVertexArray(vaOktaId);
+		int vboZweiId = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, vboZweiId);
+		glBufferData(GL_ARRAY_BUFFER, oktaeder, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		int vbNormalsOkta = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, vbNormalsOkta);
+		glBufferData(GL_ARRAY_BUFFER, normalenOkta, GL_STATIC_DRAW);
+		glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(2);
+
+		Texture myTexOkta = new Texture("bild4.jpg", 8);
+		texOktaId = myTexOkta.getId();
+		glBindTexture(GL_TEXTURE_2D, texOktaId);
+
+		int vboUVOkta = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, vboUVOkta);
+		glBufferData(GL_ARRAY_BUFFER, uvKoordsOkta, GL_STATIC_DRAW);
+		glVertexAttribPointer(3, 2, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(3);
+	}
 	
     public static float[] calculateNormals(float[] vertices) {
         float[] normals = new float[vertices.length];
