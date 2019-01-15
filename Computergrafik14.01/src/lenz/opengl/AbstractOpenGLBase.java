@@ -7,8 +7,11 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+
+import keyboard.KeyboardHandler;
 
 public abstract class AbstractOpenGLBase {
 	static {
@@ -22,14 +25,17 @@ public abstract class AbstractOpenGLBase {
 	protected abstract void render();
 
 	protected abstract void destroy();
+	
+	
+	private long window;
 
 	public void start(String title, int width, int height) {
 		System.out.println("LWJGL " + Version.getVersion());
 
-		long window = openWindow(title, width, height);
+		 window = openWindow(title, width, height);
 		GL.createCapabilities(); // internally connects OpenGL and GLFW's current context
 		System.out.println("OpenGL " + glGetString(GL_VERSION));
-
+		
 		init(); // custom user initialization
 
 		while (!glfwWindowShouldClose(window)) {
@@ -47,6 +53,7 @@ public abstract class AbstractOpenGLBase {
 		glfwDestroyWindow(window);
 		glfwTerminate();
 		glfwSetErrorCallback(null).free();
+
 	}
 
 	private long openWindow(String title, int width, int height) {
@@ -62,7 +69,7 @@ public abstract class AbstractOpenGLBase {
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
-		long window = glfwCreateWindow(width, height, title, NULL, NULL);
+		 window = glfwCreateWindow(width, height, title, NULL, NULL);
 		if (window == NULL)
 			throw new RuntimeException("Failed to create the GLFW window");
 
@@ -74,6 +81,9 @@ public abstract class AbstractOpenGLBase {
 		glfwSwapInterval(1); // v-sync
 
 		glfwShowWindow(window);
+		return window;
+	}
+	public long returnWindow() {
 		return window;
 	}
 }

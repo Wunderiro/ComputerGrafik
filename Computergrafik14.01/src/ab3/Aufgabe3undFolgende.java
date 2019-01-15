@@ -11,19 +11,31 @@ import static org.lwjgl.opengl.GL15.glGenBuffers;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
+import java.awt.event.KeyListener;
 
+import org.lwjgl.glfw.GLFWKeyCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+
+import keyboard.KeyboardHandler;
+
+import java.awt.event.KeyEvent;
 
 import lenz.opengl.AbstractOpenGLBase;
 import lenz.opengl.ShaderProgram;
 import lenz.opengl.Texture;
 
-public class Aufgabe3undFolgende extends AbstractOpenGLBase {
+public class Aufgabe3undFolgende extends AbstractOpenGLBase  {
 
 	private ShaderProgram shaderProgram;
 	private ShaderProgram shaderProgramOkta;
 	private Matrix4 matrix = new Matrix4().translate(0, 0, -2);
 	private Matrix4 matrixOkta = new Matrix4().translate(0f, 0, -2f).scale(0.6f);
 	
+	private KeyEvent keyEvent;
+	private KeyboardHandler keyHand;
+	private GLFWKeyCallback keyCallback;
+	
+	private boolean t = false;
 	private int ticker;
 	private int vaoId;
 	private int vaOktaId;
@@ -38,9 +50,12 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
 	public static void main(String[] args) {
 		new Aufgabe3undFolgende().start("CG Aufgabe 3", 700, 700);
 	}
-
+	
+		 
 	@Override
 	protected void init() {
+		glfwSetKeyCallback(super.returnWindow(),keyCallback = new KeyboardHandler());
+		
 		shaderProgram = new ShaderProgram("aufgabe3");
 		shaderProgramOkta = new ShaderProgram("secObj");
 		
@@ -55,30 +70,77 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
 
 		glUseProgram(shaderProgram.getId());
 		int locat = glGetUniformLocation(shaderProgram.getId(), "myProjectMat");
-
+		
 		glUniformMatrix4fv(locat, false, nearFar);
+		
+		glUseProgram(shaderProgramOkta.getId());
+		int locat2 = glGetUniformLocation(shaderProgramOkta.getId(), "myProjectMatOkta");
+		
+		glUniformMatrix4fv(locat2, false, nearFar);
+
 
 	}
 
 	@Override
 	public void update() {
 		// Transformation durchführen (Matrix anpassen)
-
+	
+	
 		if (ticker < 360)
 			matrix.translate(0, 0, 1.2f).rotateX(0.03f).rotateY(0.02f).rotateZ(0.03f).translate(0, 0, -1.2f);
-		if (ticker > 80 && ticker < 260)
-			matrixOkta.translate(0, 0, 1.4f).rotateX(-0.02f).rotateY(0.02f).rotateZ(0.02f).translate(0, 0, -1.4f);
-//		if (ticker < 80)
-//			matrixSec.translate(0, 0, 1.8f).rotateX(0.04f).rotateY(0.04f).translate(0, 0, -1.8f);
+
+//		Tastatureinbindung
+		if(KeyboardHandler.isKeyDown(84))	t = !t; //schalter an oder aus (Taste t)
 		
-		ticker = (ticker + 1) % 360;
+		if(!t) { // t aus, dann nimm 1. matrix
+			if(KeyboardHandler.isKeyDown(65) && ticker<90)  //A 65 nach links bewegen
+			matrix.translate(-0.01f, 0, 0);
+			
+			if(KeyboardHandler.isKeyDown(68)&& ticker<90)  //D 68 nach rechts bewegen
+			matrix.translate(0.01f, 0, 0);
+		
+			if(KeyboardHandler.isKeyDown(87)&& ticker<90)  //W 87 nach oben bewegen
+				matrix.translate(0, 0.01f, 0);
+		
+			if(KeyboardHandler.isKeyDown(83)&& ticker<90)  //S 83 nach unten bewegen
+				matrix.translate(0, -0.01f, 0);	
+			if(KeyboardHandler.isKeyDown(82)&& ticker<90)  //R 82 um Z-Achse rotieren
+				matrix.rotateZ(0.1f);
+			if(KeyboardHandler.isKeyDown(69)&& ticker<90)  //E 69 um X-Achse rotieren
+				matrix.rotateX(0.1f);
+			
+		}	
+			
+		if(t) { // t an, dann nimm 2. matrix
+			
+			if(KeyboardHandler.isKeyDown(65)&& ticker<90)  //A 65
+				matrixOkta.translate(-0.01f, 0, 0);
+				
+			if(KeyboardHandler.isKeyDown(68)&& ticker<90)  //D 68
+				matrixOkta.translate(0.01f, 0, 0);
+			
+			if(KeyboardHandler.isKeyDown(87)&& ticker<90)  //W 87
+				matrixOkta.translate(0, 0.01f, 0);
+		
+			if(KeyboardHandler.isKeyDown(83)&& ticker<90)  //S 83
+				matrixOkta.translate(0, -0.01f, 0);	
+			
+			if(KeyboardHandler.isKeyDown(82)&& ticker<90)  //R 82
+				matrixOkta.rotateZ(0.1f);	
+			if(KeyboardHandler.isKeyDown(69)&& ticker<90)  //E 69
+				matrixOkta.rotateX(0.1f);
+		
+			}
+//		if (ticker > 80 && ticker < 260)
+//			matrixOkta.translate(0, 0, 1.4f).rotateX(-0.02f).rotateY(0.02f).rotateZ(0.02f).translate(0, 0, -1.4f);
+//		
+		ticker = (ticker +1) % 90; //360
 
 	}
 
 	@Override
 	protected void render() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
 		// Matrix1 an Shader übertragen
 
 		float[] matrixFloatArray = matrix.getValuesAsArray();
@@ -266,7 +328,18 @@ public class Aufgabe3undFolgende extends AbstractOpenGLBase {
 		return comb;
     }
  
-    
+	public void keyPressed(KeyEvent e) {
+		int key = e.getKeyCode();  // Tells which key was pressed.
+		if ( key == KeyEvent.VK_LEFT )
+	matrixOkta.translate(-0.1f, 0, 0);
+		else if ( key == KeyEvent.VK_RIGHT )
+			matrixOkta.translate(0.1f, 0, 0);
+		else if ( key == KeyEvent.VK_DOWN)
+			matrixOkta.translate(0, -0.1f, 0);
+		else if ( key == KeyEvent.VK_UP )
+			matrixOkta.translate(0, 0.1f, 0);
+//		update();
+	}
 	@Override
 	public void destroy() {
 	}
